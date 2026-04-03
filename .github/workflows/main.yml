@@ -1,0 +1,31 @@
+name: Build Windows EXE (1-bit)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+
+    - name: Configure
+      run: |
+        cmake -B build ^
+          -DLLAMA_BUILD_SERVER=OFF ^
+          -DLLAMA_BUILD_TESTS=OFF
+
+    - name: Build
+      run: |
+        cmake --build build --config Release
+
+    - name: Upload EXE
+      uses: actions/upload-artifact@v4
+      with:
+        name: llama-1bit-windows
+        path: build/bin/*.exe
