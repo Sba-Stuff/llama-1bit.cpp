@@ -11,7 +11,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup MSYS2 / MinGW
-        uses: msys2/setup-msys2@v3
+        uses: msys2/setup-msys2@v2
         with:
           update: true
           install: >
@@ -35,11 +35,10 @@ jobs:
             -DLLAMA_BUILD_SERVER=ON
           cmake --build . --config Release -j 4
 
-      - name: Collect all executables
+      - name: Collect all executable files
         shell: bash
         run: |
           mkdir -p artifacts
-          # Find all .exe files in the build tree and copy them to artifacts/
           find . -type f -iname "*.exe" -exec cp {} artifacts/ \;
           ls -lah artifacts
 
