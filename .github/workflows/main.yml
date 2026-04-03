@@ -1,34 +1,50 @@
-name: Build Windows Full Binaries
-
+name: Build all LLaMA Windows binaries
 on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-    # 1. Checkout the repository
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-    # 2. Setup CMake
-    - name: Setup CMake
-      uses: lukka/get-cmake@latest
+      - name: Setup MSYS2 / MinGW
+        uses: msys2/setup-msys2@v3
+        with:
+          update: true
+          install: >
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
 
-    # 3. Configure CMake to build all required binaries
-    - name: Configure CMake
-      run: cmake -B build -DLLAMA_BUILD_SERVER=ON -DLLAMA_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+      - name: Configure and build all binaries
+        shell: bash
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. \
+            -G "MinGW Makefiles" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLLAMA_OPENSSL=OFF \
+            -DGGML_OPENMP=OFF \
+            -DLLAMA_BUILD_EXAMPLES=ON \
+            -DLLAMA_BUILD_TOOLS=ON \
+            -DLLAMA_BUILD_TESTS=OFF \
+            -DLLAMA_BUILD_SERVER=ON
+          cmake --build . --config Release -j 4
 
-    # 4. Build all binaries
-    - name: Build project
-      run: cmake --build build --config Release
+      - name: Collect all executables
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          # Find all .exe files in the build tree and copy them to artifacts/
+          find . -type f -iname "*.exe" -exec cp {} artifacts/ \;
+          ls -lah artifacts
 
-    # 5. Upload all built executables
-    - name: Upload EXE binaries
-      uses: actions/upload-artifact@v4
-      with:
-        name: llama-windows-full
-        path: build/Release/*.exe
+      - name: Upload binaries as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-windows-binaries
+          path: artifacts/
