@@ -8,23 +8,24 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout
+    # 1. Checkout repository
+    - name: Checkout repository
       uses: actions/checkout@v4
 
+    # 2. Setup CMake
     - name: Setup CMake
       uses: lukka/get-cmake@latest
 
-    - name: Configure
-      run: |
-        cmake -B build ^
-          -DLLAMA_BUILD_SERVER=OFF ^
-          -DLLAMA_BUILD_TESTS=OFF
+    # 3. Configure project (PowerShell safe)
+    - name: Configure CMake
+      run: cmake -B build -DLLAMA_BUILD_SERVER=OFF -DLLAMA_BUILD_TESTS=OFF
 
-    - name: Build
-      run: |
-        cmake --build build --config Release
+    # 4. Build Release
+    - name: Build project
+      run: cmake --build build --config Release
 
-    - name: Upload EXE
+    # 5. Upload EXE artifacts
+    - name: Upload built EXE
       uses: actions/upload-artifact@v4
       with:
         name: llama-1bit-windows
